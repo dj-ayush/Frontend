@@ -1,3 +1,4 @@
+import React from 'react';
 import { siteContent } from './content/siteContent.js';
 import { getYouTubeThumbnailSet } from './utils/youtube.js';
 

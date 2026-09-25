@@ -26,3 +26,7 @@ export function getYouTubeThumbnailSet(url) {
     hq: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
   };
 }
+
+export function getYouTubeThumbnail(videoId, quality = 'maxresdefault') {
+  return `https://i.ytimg.com/vi/${videoId}/${quality}.jpg`;
+}

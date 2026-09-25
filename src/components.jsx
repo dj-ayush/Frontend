@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import indiaMap from '@svg-maps/india';
-import { ArrowUpRight, Play } from 'lucide-react';
+import { ArrowUpRight, Menu, Play, X } from 'lucide-react';
 import { siteContent } from './content/siteContent.js';
-import { getYouTubeThumbnailSet } from './utils/youtube.js';
+import { getYouTubeThumbnail } from './utils/youtube.js';
 
 const navItems = [
   { label: 'Home', href: '#top' },
@@ -12,17 +12,25 @@ const navItems = [
   { label: 'About', href: '#about' },
 ];
 
-export function VideoImage({ video, eager = false }) {
-  const thumbnail = getYouTubeThumbnailSet(video.url);
+function getVideo(videoId) {
+  return siteContent.videos.find((video) => video.id === videoId) ?? siteContent.videos[0];
+}
+
+export function VideoImage({ video, eager = false, className = '' }) {
+  const [src, setSrc] = useState(getYouTubeThumbnail(video.id));
+
+  useEffect(() => {
+    setSrc(getYouTubeThumbnail(video.id));
+  }, [video.id]);
 
   return (
     <img
-      src={thumbnail.maxres}
-      alt=""
+      className={className}
+      src={src}
+      alt={video.destination ? `${video.destination} video thumbnail` : 'Explore with Me video thumbnail'}
       loading={eager ? 'eager' : 'lazy'}
-      onError={(event) => {
-        event.currentTarget.src = thumbnail.hq;
-      }}
+      decoding="async"
+      onError={() => setSrc(getYouTubeThumbnail(video.id, 'hqdefault'))}
     />
   );
 }
@@ -30,7 +38,11 @@ export function VideoImage({ video, eager = false }) {
 export function PageLoader() {
   return (
     <div className="page-loader" aria-hidden="true">
-      <span>Explore with Me</span>
+      <div>
+        <span>Explore</span>
+        <span>with Me</span>
+      </div>
+      <i />
     </div>
   );
 }
@@ -46,11 +58,34 @@ export function Cursor() {
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  useEffect(() => {
+    document.body.classList.toggle('menu-open', menuOpen);
+    return () => document.body.classList.remove('menu-open');
+  }, [menuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <header className="site-header">
-      <a className="brand" href="#top" onClick={() => setMenuOpen(false)}>
+      <a className="brand" href="#top" onClick={closeMenu}>
         Explore with Me
       </a>
+      <nav className={menuOpen ? 'nav-links is-open' : 'nav-links'} aria-label="Primary navigation">
+        {navItems.map((item) => (
+          <a className="nav-link" href={item.href} key={item.href} onClick={closeMenu}>
+            {item.label}
+          </a>
+        ))}
+        <div className="nav-socials">
+          <a href={siteContent.socials.youtube} target="_blank" rel="noreferrer" aria-label="YouTube" data-cursor="PLAY">
+            <Play size={17} />
+            <span>YouTube</span>
+          </a>
+          <a href={siteContent.socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" data-cursor="VIEW">
+            <span>Instagram</span>
+          </a>
+        </div>
+      </nav>
       <button
         className="menu-toggle"
         type="button"
@@ -58,78 +93,62 @@ export function Header() {
         aria-expanded={menuOpen}
         onClick={() => setMenuOpen((isOpen) => !isOpen)}
       >
-        <span />
-        <span />
+        {menuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
-      <nav className={menuOpen ? 'nav-links is-open' : 'nav-links'} aria-label="Primary navigation">
-        {navItems.map((item) => (
-          <a className="nav-link" href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>
-            {item.label}
-          </a>
-        ))}
-        <a href={siteContent.social.youtube} target="_blank" rel="noreferrer" className="nav-youtube">
-          <Play size={14} />
-          YouTube
-        </a>
-      </nav>
     </header>
   );
 }
 
 export function Hero() {
-  const heroVideo = siteContent.videos[0];
+  const heroVideo = getVideo('jiO-3RdbVGQ');
 
   return (
     <section className="hero" id="top" aria-labelledby="hero-title">
-      <a className="hero-media" href={heroVideo.url} target="_blank" rel="noreferrer" data-cursor="PLAY">
+      <div className="hero-image media-parallax">
         <VideoImage video={heroVideo} eager />
-      </a>
-      <div className="hero-copy">
-        <p className="hero-kicker">Travel &bull; Food &bull; Culture &bull; Adventure</p>
+      </div>
+      <div className="hero-content" data-animate="section">
+        <p className="eyebrow">Travel &bull; Food &bull; Culture &bull; Adventure</p>
         <h1 id="hero-title">
           Explore
-          <span>with Me.</span>
+          <span>with Me</span>
         </h1>
-        <p>Stories, places and experiences from the road.</p>
+        <p>Discover destinations, hidden gems, local culture and unforgettable journeys.</p>
         <div className="hero-meta">
           <span>India</span>
-          <span>Travel journal</span>
+          <span>Travel film journal</span>
         </div>
         <div className="actions">
-          <a className="button primary" href={siteContent.social.youtube} target="_blank" rel="noreferrer">
+          <a className="button primary" href={siteContent.socials.youtube} target="_blank" rel="noreferrer" data-cursor="PLAY">
             Watch on YouTube
             <ArrowUpRight size={16} />
           </a>
-          <a className="button ghost" href="#explore-india">
-            Explore India
+          <a className="button ghost" href="#journeys" data-cursor="EXPLORE">
+            Explore Journeys
           </a>
         </div>
       </div>
-      <a className="scroll-cue" href="#manifesto" aria-label="Scroll to manifesto">
-        <span />
-        Scroll
-      </a>
     </section>
   );
 }
 
 export function Manifesto() {
   return (
-    <section className="manifesto" id="manifesto">
-      <div className="manifesto-mark reveal">The Journey</div>
-      <h2 className="reveal">Some places are visited. Some places stay with you.</h2>
-      <p className="reveal">
-        Explore with Me is a visual travel journal shaped by destinations, hidden gems, food, culture and simple moments
-        from the road. Every film keeps the focus on real places and real experiences.
+    <section className="manifesto cream-section" data-animate="section">
+      <p className="eyebrow">The Journey</p>
+      <h2>India, framed through food, roads, culture and quiet discoveries.</h2>
+      <p>
+        Explore with Me is a visual travel journal shaped by real places and real videos from the channel. The site uses
+        creator thumbnails and verified journey data only.
       </p>
     </section>
   );
 }
 
-function SectionTitle({ eyebrow, title, text, light = false }) {
+function SectionIntro({ eyebrow, title, text, align = 'split' }) {
   return (
-    <div className={light ? 'section-title light reveal' : 'section-title reveal'}>
-      <p>{eyebrow}</p>
+    <div className={`section-intro ${align}`} data-animate="section">
+      <p className="eyebrow">{eyebrow}</p>
       <h2>{title}</h2>
       {text ? <span>{text}</span> : null}
     </div>
@@ -138,48 +157,54 @@ function SectionTitle({ eyebrow, title, text, light = false }) {
 
 export function IndiaExplorer() {
   const [selectedStateId, setSelectedStateId] = useState('ka');
-  const [hovered, setHovered] = useState(null);
-  const journeysByState = useMemo(() => {
+  const [hoveredState, setHoveredState] = useState(null);
+  const videosByState = useMemo(() => {
     return siteContent.videos.reduce((acc, video) => {
       if (!video.stateId) {
         return acc;
       }
-
       acc[video.stateId] = [...(acc[video.stateId] ?? []), video];
       return acc;
     }, {});
   }, []);
   const selectedLocation = indiaMap.locations.find((location) => location.id === selectedStateId);
-  const selectedState = siteContent.exploreIndia.states.find((state) => state.id === selectedStateId);
-  const selectedJourneys = journeysByState[selectedStateId] ?? [];
+  const selectedVideos = videosByState[selectedStateId] ?? [];
+  const selectedState = siteContent.mapStates[selectedStateId];
 
   return (
     <section className="explore-india" id="explore-india">
-      <SectionTitle
+      <SectionIntro
         eyebrow="Explore India"
-        title="Click a state to explore the places covered."
-        text="A working India map for verified Explore with Me journeys."
+        title="India, through my lens."
+        text="Click a state to discover the places actually covered."
       />
-      <div className="map-grid">
-        <div className="map-wrap reveal" data-cursor="EXPLORE">
-          <svg viewBox={indiaMap.viewBox} role="img" aria-label={indiaMap.label}>
+      <div className="atlas-layout">
+        <div className="india-map-shell" data-animate="map" data-cursor="EXPLORE">
+          <svg className="india-map" viewBox={indiaMap.viewBox} role="img" aria-label={indiaMap.label}>
             {indiaMap.locations.map((location) => {
-              const hasJourneys = Boolean(journeysByState[location.id]);
-              const isSelected = selectedStateId === location.id;
+              const journeys = videosByState[location.id] ?? [];
+              const hasJourneys = journeys.length > 0;
+              const isSelected = location.id === selectedStateId;
+
               return (
                 <path
                   key={location.id}
                   d={location.path}
                   data-state-id={location.id}
-                  className={['map-state state-path', hasJourneys ? 'has-journeys' : 'is-quiet', isSelected ? 'is-selected' : '']
+                  className={[
+                    'state-path',
+                    hasJourneys ? 'has-journeys' : 'is-muted',
+                    isSelected ? 'is-selected' : '',
+                  ]
                     .filter(Boolean)
                     .join(' ')}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${location.name}${hasJourneys ? `, ${journeysByState[location.id].length} journeys` : ', more journeys coming soon'}`}
-                  onMouseEnter={() => setHovered(location)}
-                  onMouseLeave={() => setHovered(null)}
-                  onFocus={() => setHovered(location)}
+                  aria-label={`${location.name}, ${journeys.length} journeys`}
+                  onMouseEnter={() => setHoveredState(location)}
+                  onMouseLeave={() => setHoveredState(null)}
+                  onFocus={() => setHoveredState(location)}
+                  onBlur={() => setHoveredState(null)}
                   onClick={() => setSelectedStateId(location.id)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
@@ -191,28 +216,33 @@ export function IndiaExplorer() {
               );
             })}
           </svg>
-          {hovered ? (
+          {hoveredState ? (
             <div className="map-tooltip">
-              <strong>{hovered.name}</strong>
-              <span>{journeysByState[hovered.id]?.length ?? 0} journeys</span>
+              <strong>{hoveredState.name}</strong>
+              <span>{videosByState[hoveredState.id]?.length ?? 0} journeys</span>
             </div>
           ) : null}
         </div>
-        <aside className="state-panel reveal" aria-live="polite">
-          <p>{selectedLocation?.name ?? 'India'}</p>
-          <h3>{selectedJourneys.length ? `${selectedJourneys.length.toString().padStart(2, '0')} journeys` : 'More journeys coming soon.'}</h3>
+        <aside className="state-panel" data-animate="section" aria-live="polite">
+          <p className="eyebrow">{selectedLocation?.name ?? 'India'}</p>
+          <h3>{selectedVideos.length ? `${selectedVideos.length} journeys` : 'No journeys documented yet.'}</h3>
           <span>{selectedState?.note ?? 'No verified Explore with Me video is connected to this state yet.'}</span>
-          {selectedJourneys.length ? (
-            <div className="state-journeys">
-              {selectedJourneys.map((video) => (
-                <a href={video.url} target="_blank" rel="noreferrer" key={video.url} data-cursor="PLAY">
+          <div className="state-journeys">
+            {selectedVideos.length ? (
+              selectedVideos.map((video) => (
+                <a href={video.url} target="_blank" rel="noreferrer" key={video.id} data-cursor="PLAY">
                   <VideoImage video={video} />
-                  <strong>{video.destination}</strong>
-                  <small>{video.label}</small>
+                  <span>
+                    <strong>{video.destination || video.title}</strong>
+                    <small>{video.label}</small>
+                  </span>
+                  <ArrowUpRight size={16} />
                 </a>
-              ))}
-            </div>
-          ) : null}
+              ))
+            ) : (
+              <p>No journeys documented yet.</p>
+            )}
+          </div>
         </aside>
       </div>
     </section>
@@ -220,56 +250,31 @@ export function IndiaExplorer() {
 }
 
 export function ExploredPlaces() {
-  const destinations = siteContent.destinations;
+  const journeys = siteContent.journeys.map((journey) => ({
+    ...journey,
+    video: getVideo(journey.videoId),
+  }));
 
   return (
-    <section className="places warm-section" id="journeys">
-      <SectionTitle eyebrow="Places I've explored" title="Real destinations. Real stories." light />
-      <div className="destination-layout">
-        {destinations.map((destination, index) => (
+    <section className="journeys cream-section" id="journeys">
+      <SectionIntro eyebrow="Journeys" title="Real destinations. Real stories." text="Verified places connected to supplied videos." />
+      <div className="journey-editorial">
+        {journeys.map((journey, index) => (
           <a
-            className={`destination-card place-card image-reveal place-${index + 1}`}
-            href={destination.video.url}
+            className={`journey-tile tile-${index + 1}`}
+            href={journey.video.url}
             target="_blank"
             rel="noreferrer"
-            key={`${destination.name}-${destination.video.url}`}
-            data-cursor="EXPLORE"
+            key={journey.videoId}
+            data-animate="image"
+            data-cursor="VIEW"
           >
-            <VideoImage video={destination.video} />
+            <VideoImage video={journey.video} />
             <span>
-              <small>{destination.video.label}</small>
-              <strong>{destination.name}</strong>
+              <small>{journey.stateName}</small>
+              <strong>{journey.destination}</strong>
+              <em>{journey.label}</em>
             </span>
-            <ArrowUpRight size={20} />
-          </a>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export function FilmArchive() {
-  return (
-    <section className="films" id="films">
-      <SectionTitle eyebrow="The Film Archive" title="Real journeys. Real places. Real stories." />
-      <div className="film-grid">
-        {siteContent.videos.map((video, index) => (
-          <a
-            className={`film-card film-row image-reveal film-${index + 1}`}
-            href={video.url}
-            target="_blank"
-            rel="noreferrer"
-            key={video.url}
-            data-cursor="PLAY"
-          >
-            <VideoImage video={video} />
-            <span className="play-badge">
-              <Play size={16} />
-            </span>
-            <div>
-              <small>{video.label}</small>
-              <strong>{video.destination}</strong>
-            </div>
           </a>
         ))}
       </div>
@@ -278,71 +283,115 @@ export function FilmArchive() {
 }
 
 export function FeaturedJourney() {
-  const featured = siteContent.videos.find((video) => video.destination === 'Wayanad') ?? siteContent.videos[4];
+  const featured = getVideo(siteContent.featuredVideoId);
 
   return (
-    <section className="featured-poster">
-      <a className="poster-image image-reveal" href={featured.url} target="_blank" rel="noreferrer" data-cursor="PLAY">
-        <VideoImage video={featured} />
-      </a>
-      <div className="poster-copy reveal">
-        <p>Featured Journey</p>
-        <span>Mist &bull; Waterfalls &bull; Hills</span>
-        <h2>{featured.destination}</h2>
-        <em>Wayanad like never before.</em>
-        <a className="button primary" href={featured.url} target="_blank" rel="noreferrer">
+    <section className="featured-film">
+      <div className="featured-copy" data-animate="section">
+        <p className="eyebrow">Featured Film</p>
+        <h2>{featured.destination || featured.title}</h2>
+        <p>{featured.description}</p>
+        <a className="button primary" href={featured.url} target="_blank" rel="noreferrer" data-cursor="PLAY">
           Watch Film
           <ArrowUpRight size={16} />
         </a>
       </div>
+      <a className="featured-image" href={featured.url} target="_blank" rel="noreferrer" data-animate="image" data-cursor="PLAY">
+        <VideoImage video={featured} />
+        <span>
+          <Play size={18} />
+        </span>
+      </a>
     </section>
   );
 }
 
-export function StoryGrid() {
-  const stories = siteContent.videos.filter((video) =>
-    ['Kolar Gold Fields', 'Chikkamagaluru', 'Yelagiri', 'Sakleshpur'].includes(video.destination),
+function FilmLink({ video, index, variant = 'card' }) {
+  return (
+    <a className={`film-link ${variant}`} href={video.url} target="_blank" rel="noreferrer" data-animate="image" data-cursor="PLAY">
+      <VideoImage video={video} />
+      <span className="play-dot">
+        <Play size={16} />
+      </span>
+      <div>
+        <small>
+          {String(index + 1).padStart(2, '0')} &bull; {video.category}
+        </small>
+        <strong>{video.destination || video.title}</strong>
+        {video.destination ? <em>{video.stateName}</em> : <em>Explore with Me archive</em>}
+      </div>
+    </a>
   );
+}
+
+export function FilmArchive() {
+  const [activeCategory, setActiveCategory] = useState('All');
+  const filteredVideos = activeCategory === 'All'
+    ? siteContent.videos
+    : siteContent.videos.filter((video) => video.category === activeCategory);
+  const featured = filteredVideos[0];
+  const latest = filteredVideos.slice(1, 7);
+  const rows = filteredVideos.slice(7);
 
   return (
-    <section className="stories warm-section">
-      <SectionTitle eyebrow="Stories from the road" title="Small chapters from real journeys." light />
-      <div className="story-grid">
-        {stories.map((video) => (
-          <a href={video.url} target="_blank" rel="noreferrer" className="story image-reveal" key={video.url} data-cursor="PLAY">
-            <VideoImage video={video} />
-            <span>
-              <small>{video.label}</small>
-              <strong>{video.destination}</strong>
-              <em>{video.stateName}</em>
-            </span>
-            <ArrowUpRight size={18} />
-          </a>
+    <section className="films" id="films">
+      <SectionIntro
+        eyebrow="The Film Archive"
+        title="Stories, places and moments collected along the way."
+        text={`${siteContent.videos.length} real YouTube videos. No embedded players.`}
+      />
+      <div className="filter-bar" role="tablist" aria-label="Film categories">
+        {siteContent.categories.map((category) => (
+          <button
+            type="button"
+            className={activeCategory === category ? 'is-active' : ''}
+            key={category}
+            onClick={() => setActiveCategory(category)}
+          >
+            {category}
+          </button>
         ))}
       </div>
+      {filteredVideos.length ? (
+        <div className="archive-layout" key={activeCategory}>
+          {featured ? <FilmLink video={featured} index={0} variant="feature" /> : null}
+          <div className="latest-strip" aria-label="Latest films">
+            {latest.map((video, index) => (
+              <FilmLink video={video} index={index + 1} variant="strip" key={video.id} />
+            ))}
+          </div>
+          <div className="archive-rows">
+            {rows.map((video, index) => (
+              <FilmLink video={video} index={index + 7} variant="row" key={video.id} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="empty-filter">No verified films in this category yet.</p>
+      )}
     </section>
   );
 }
 
 export function About() {
-  const aboutVideo = siteContent.videos.find((video) => video.destination === 'Chikkamagaluru') ?? siteContent.videos[2];
+  const aboutVideo = getVideo('DAtrMaRw12I');
 
   return (
     <section className="about" id="about">
-      <div className="about-copy reveal">
-        <p>About</p>
+      <div className="about-copy" data-animate="section">
+        <p className="eyebrow">About</p>
         <h2>More than just destinations.</h2>
-        <span>
+        <p>
           Explore with Me is all about discovering incredible destinations, hidden gems, local culture, and unforgettable
           travel experiences across India and beyond.
-        </span>
-        <span>
+        </p>
+        <p>
           From travel guides and scenic road trips to food, adventure, and budget-friendly itineraries, every video is
           created to inspire and help you plan your next journey.
-        </span>
+        </p>
         <strong>Travel &bull; Culture &bull; Food &bull; Adventure &bull; Hidden Gems</strong>
       </div>
-      <a className="about-photo image-reveal" href={aboutVideo.url} target="_blank" rel="noreferrer" data-cursor="PLAY">
+      <a className="about-image" href={aboutVideo.url} target="_blank" rel="noreferrer" data-animate="image" data-cursor="PLAY">
         <VideoImage video={aboutVideo} />
       </a>
     </section>
@@ -350,22 +399,22 @@ export function About() {
 }
 
 export function InstagramSection() {
-  const instagramVideos = siteContent.videos.slice(0, 4);
+  const stripVideos = siteContent.videos.slice(2, 7);
 
   return (
-    <section className="instagram" id="instagram">
+    <section className="instagram-section cream-section" id="instagram" data-animate="section">
       <div className="instagram-strip">
-        {instagramVideos.map((video) => (
-          <span className="image-reveal" key={video.url}>
+        {stripVideos.map((video) => (
+          <span key={video.id} data-animate="image">
             <VideoImage video={video} />
           </span>
         ))}
       </div>
-      <div className="instagram-copy reveal">
-        <p>Follow the journey</p>
+      <div className="instagram-copy">
+        <p className="eyebrow">Follow the journey</p>
         <h2>@explore_with_me_vlogs</h2>
-        <a className="button primary" href={siteContent.social.instagram} target="_blank" rel="noreferrer">
-          Open Instagram
+        <a className="button primary" href={siteContent.socials.instagram} target="_blank" rel="noreferrer" data-cursor="VIEW">
+          Follow on Instagram
           <ArrowUpRight size={16} />
         </a>
       </div>
@@ -374,24 +423,17 @@ export function InstagramSection() {
 }
 
 export function FinalCTA() {
-  const ctaVideo = siteContent.videos[1];
-
   return (
-    <section className="final-cta">
-      <a className="final-image image-reveal" href={ctaVideo.url} target="_blank" rel="noreferrer" data-cursor="PLAY">
-        <VideoImage video={ctaVideo} />
-      </a>
-      <div className="final-copy reveal">
-        <h2>Where should we go next?</h2>
-        <p>Follow the journey and watch the latest Explore with Me films.</p>
-        <div className="actions">
-          <a className="button primary" href={siteContent.social.youtube} target="_blank" rel="noreferrer">
-            Watch on YouTube
-          </a>
-          <a className="button ghost" href={siteContent.social.instagram} target="_blank" rel="noreferrer">
-            Follow on Instagram
-          </a>
-        </div>
+    <section className="final-cta" data-animate="section">
+      <p className="eyebrow">Keep exploring</p>
+      <h2>Stories worth remembering.</h2>
+      <div className="actions">
+        <a className="button primary" href={siteContent.socials.youtube} target="_blank" rel="noreferrer" data-cursor="PLAY">
+          YouTube
+        </a>
+        <a className="button ghost" href={siteContent.socials.instagram} target="_blank" rel="noreferrer" data-cursor="VIEW">
+          Instagram
+        </a>
       </div>
     </section>
   );
@@ -399,24 +441,22 @@ export function FinalCTA() {
 
 export function Footer() {
   return (
-    <footer className="footer">
+    <footer className="footer" data-animate="section">
       <div>
-        <h2>
-          Explore
-          <span>with Me.</span>
-        </h2>
-        <p>Travel &bull; Food &bull; Culture &bull; Adventure</p>
+        <h2>Explore with Me.</h2>
+        <p>Travel &bull; Food &bull; Culture &bull; Adventure &bull; Hidden Gems</p>
+        <small>Stories worth remembering.</small>
       </div>
       <nav aria-label="Footer navigation">
-        <a href="#top">Home</a>
-        <a href="#explore-india">Explore India</a>
-        <a href="#journeys">Journeys</a>
-        <a href="#films">Films</a>
-        <a href="#about">About</a>
-        <a href={siteContent.social.youtube} target="_blank" rel="noreferrer">
+        {navItems.map((item) => (
+          <a href={item.href} key={item.href}>
+            {item.label}
+          </a>
+        ))}
+        <a href={siteContent.socials.youtube} target="_blank" rel="noreferrer">
           YouTube
         </a>
-        <a href={siteContent.social.instagram} target="_blank" rel="noreferrer">
+        <a href={siteContent.socials.instagram} target="_blank" rel="noreferrer">
           Instagram
         </a>
       </nav>

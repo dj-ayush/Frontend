@@ -1,5 +1,4 @@
-import React, { useEffect, useRef } from 'react';
-import Lenis from 'lenis';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -16,182 +15,153 @@ import {
   InstagramSection,
   Manifesto,
   PageLoader,
-  StoryGrid,
 } from './components.jsx';
 
 gsap.registerPlugin(ScrollTrigger);
 
-function useSmoothScroll() {
+function useHeaderState(rootRef) {
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return undefined;
-    }
-
-    const lenis = new Lenis({
-      duration: 1.05,
-      smoothWheel: true,
-      wheelMultiplier: 0.9,
-    });
-
-    const raf = (time) => {
-      lenis.raf(time);
-      ScrollTrigger.update();
+    const update = () => {
+      rootRef.current?.classList.toggle('nav-solid', window.scrollY > 20);
     };
 
-    gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
 
-    return () => {
-      gsap.ticker.remove(raf);
-      lenis.destroy();
-    };
-  }, []);
+    return () => window.removeEventListener('scroll', update);
+  }, [rootRef]);
 }
 
 function useMotion(rootRef) {
-  useEffect(() => {
-    if (!rootRef.current) {
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+
+    if (!root) {
       return undefined;
     }
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const headerTrigger = ScrollTrigger.create({
-      start: 10,
-      end: 99999,
-      onUpdate: (self) => {
-        rootRef.current?.classList.toggle('nav-solid', self.scroll() > 16);
-      },
-    });
 
     if (reduceMotion) {
-      rootRef.current.classList.add('loaded');
-      return () => headerTrigger.kill();
+      root.classList.add('is-loaded');
+      return undefined;
     }
 
-    const context = gsap.context(() => {
-      const loaderTimeline = gsap.timeline();
+    const ctx = gsap.context(() => {
+      const loader = root.querySelector('.page-loader');
 
-      loaderTimeline
-        .to('.page-loader span', { y: 0, autoAlpha: 1, duration: 0.7, ease: 'power3.out' })
-        .to('.page-loader', { yPercent: -100, duration: 0.9, ease: 'power4.inOut', delay: 0.28 })
-        .set('.page-loader', { display: 'none' })
-        .add(() => rootRef.current?.classList.add('loaded'), '<0.3')
-        .from('.site-header', { y: -18, autoAlpha: 0, duration: 0.75, ease: 'power3.out' }, '<')
-        .from('.hero-copy > *', { y: 30, duration: 1, stagger: 0.1, ease: 'power3.out' }, '<0.08')
-        .from('.hero-media img', { scale: 1.08, duration: 1.4, ease: 'power3.out' }, '<');
+      gsap
+        .timeline({
+          defaults: { ease: 'power3.out' },
+          onComplete: () => root.classList.add('is-loaded'),
+        })
+        .from('.page-loader span', { y: 18, autoAlpha: 0, duration: 0.45, stagger: 0.08 })
+        .to('.page-loader i', { scaleX: 1, duration: 0.45 }, '<0.1')
+        .to(loader, { autoAlpha: 0, duration: 0.45, delay: 0.15, pointerEvents: 'none' })
+        .from('.site-header', { y: -16, autoAlpha: 0, duration: 0.45 }, '-=0.25')
+        .from('.hero-content > *', { y: 20, autoAlpha: 0, duration: 0.65, stagger: 0.08 }, '-=0.2');
 
-      gsap.to('.hero-media img', {
-        yPercent: 7,
+      gsap.to('.media-parallax img', {
+        yPercent: 8,
         ease: 'none',
         scrollTrigger: {
           trigger: '.hero',
           start: 'top top',
           end: 'bottom top',
-          scrub: 1.2,
+          scrub: 0.6,
         },
       });
 
-      gsap.utils.toArray('.reveal').forEach((element) => {
-        gsap.from(element, {
-          y: 34,
+      gsap.utils.toArray('[data-animate="section"]').forEach((section) => {
+        gsap.from(section, {
+          y: 24,
           autoAlpha: 0,
-          duration: 0.9,
+          duration: 0.72,
           ease: 'power3.out',
           scrollTrigger: {
-            trigger: element,
-            start: 'top 84%',
-          },
-        });
-      });
-
-      gsap.utils.toArray('.image-reveal').forEach((frame) => {
-        const image = frame.querySelector('img');
-
-        gsap.from(frame, {
-          clipPath: 'inset(10% 0 10% 0)',
-          autoAlpha: 0,
-          duration: 1,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: frame,
+            trigger: section,
             start: 'top 86%',
+            once: true,
           },
         });
-
-        if (image) {
-          gsap.to(image, {
-            yPercent: -5,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: frame,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 1.3,
-            },
-          });
-        }
       });
 
-      gsap.from('.map-state', {
+      gsap.utils.toArray('[data-animate="image"]').forEach((imageFrame) => {
+        gsap.from(imageFrame, {
+          y: 18,
+          clipPath: 'inset(8% 0 8% 0)',
+          autoAlpha: 0,
+          duration: 0.72,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: imageFrame,
+            start: 'top 88%',
+            once: true,
+          },
+        });
+      });
+
+      gsap.from('.state-path', {
         autoAlpha: 0,
-        scale: 0.985,
-        duration: 0.75,
-        stagger: 0.01,
+        duration: 0.5,
+        stagger: 0.008,
         ease: 'power2.out',
         scrollTrigger: {
-          trigger: '.map-wrap',
-          start: 'top 78%',
+          trigger: '.india-map-shell',
+          start: 'top 82%',
+          once: true,
         },
       });
-    }, rootRef);
+    }, root);
+
+    const refresh = window.setTimeout(() => ScrollTrigger.refresh(), 250);
 
     return () => {
-      context.revert();
-      headerTrigger.kill();
+      window.clearTimeout(refresh);
+      ctx.revert();
     };
   }, [rootRef]);
 }
 
 function useCursor(rootRef) {
   useEffect(() => {
-    if (!rootRef.current || window.matchMedia('(pointer: coarse)').matches) {
+    const root = rootRef.current;
+
+    if (!root || window.matchMedia('(pointer: coarse)').matches) {
       return undefined;
     }
 
-    const cursor = rootRef.current.querySelector('.cursor');
+    const cursor = root.querySelector('.cursor');
     const label = cursor?.querySelector('span');
 
     if (!cursor || !label) {
       return undefined;
     }
 
-    const setCursor = (event) => {
-      gsap.to(cursor, { x: event.clientX, y: event.clientY, duration: 0.18, ease: 'power3.out' });
+    const move = (event) => {
+      gsap.to(cursor, { x: event.clientX, y: event.clientY, duration: 0.16, ease: 'power3.out' });
     };
-
     const enter = (event) => {
-      const text = event.currentTarget.getAttribute('data-cursor') || '';
-      label.textContent = text;
+      label.textContent = event.currentTarget.getAttribute('data-cursor') || 'VIEW';
       cursor.classList.add('is-active');
     };
-
     const leave = () => {
       label.textContent = '';
       cursor.classList.remove('is-active');
     };
 
-    window.addEventListener('mousemove', setCursor);
-    const targets = rootRef.current.querySelectorAll('a, button, [data-cursor]');
+    window.addEventListener('pointermove', move, { passive: true });
+    const targets = root.querySelectorAll('a, button, [data-cursor]');
     targets.forEach((target) => {
-      target.addEventListener('mouseenter', enter);
-      target.addEventListener('mouseleave', leave);
+      target.addEventListener('pointerenter', enter);
+      target.addEventListener('pointerleave', leave);
     });
 
     return () => {
-      window.removeEventListener('mousemove', setCursor);
+      window.removeEventListener('pointermove', move);
       targets.forEach((target) => {
-        target.removeEventListener('mouseenter', enter);
-        target.removeEventListener('mouseleave', leave);
+        target.removeEventListener('pointerenter', enter);
+        target.removeEventListener('pointerleave', leave);
       });
     };
   }, [rootRef]);
@@ -200,7 +170,7 @@ function useCursor(rootRef) {
 export default function App() {
   const rootRef = useRef(null);
 
-  useSmoothScroll();
+  useHeaderState(rootRef);
   useMotion(rootRef);
   useCursor(rootRef);
 
@@ -214,9 +184,8 @@ export default function App() {
         <Manifesto />
         <IndiaExplorer />
         <ExploredPlaces />
-        <FilmArchive />
         <FeaturedJourney />
-        <StoryGrid />
+        <FilmArchive />
         <About />
         <InstagramSection />
         <FinalCTA />

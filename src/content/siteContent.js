@@ -63,6 +63,17 @@ export const siteContent = {
     },
   ],
   categories: ['Road trips', 'City walks', 'Nature', 'Food', 'Culture'],
+  get destinations() {
+    return this.videos
+      .filter((video) => video.destination && video.destination !== 'Explore with Me Film')
+      .map((video) => ({
+        name: video.destination,
+        stateId: video.stateId,
+        stateName: video.stateName,
+        label: video.label,
+        video,
+      }));
+  },
   exploreIndia: {
     states: [
       {

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import indiaMap from '@svg-maps/india';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { siteContent } from './content/siteContent.js';
@@ -7,157 +8,97 @@ import { getYouTubeThumbnailSet } from './utils/youtube.js';
 gsap.registerPlugin(ScrollTrigger);
 
 const navItems = [
-  { label: 'Featured', href: '#featured' },
   { label: 'Explore India', href: '#explore-india' },
+  { label: 'Journeys', href: '#journeys' },
   { label: 'Films', href: '#films' },
   { label: 'About', href: '#about' },
 ];
 
-function useCinematicMotion(rootRef) {
+function usePageMotion(rootRef) {
   useEffect(() => {
-    if (!rootRef.current) {
-      return undefined;
-    }
-
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (reducedMotion) {
+    if (!rootRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return undefined;
     }
 
     const context = gsap.context(() => {
-      gsap.from('.site-header', {
-        y: -22,
+      gsap.from('.hero-copy > *', {
+        y: 28,
         autoAlpha: 0,
         duration: 1,
+        stagger: 0.1,
         ease: 'power3.out',
       });
 
-      gsap.from('.hero-copy > *', {
-        y: 34,
-        autoAlpha: 0,
-        duration: 1.15,
-        ease: 'power3.out',
-        stagger: 0.13,
-        delay: 0.12,
-      });
-
-      gsap.from('.hero-frame, .hero-strip a', {
+      gsap.from('.hero-visual', {
         clipPath: 'inset(12% 0% 12% 0%)',
         autoAlpha: 0,
-        y: 28,
-        duration: 1.35,
+        scale: 1.03,
+        duration: 1.25,
         ease: 'power3.out',
-        stagger: 0.12,
       });
 
-      gsap.utils.toArray('.section-band, .final-cta').forEach((section) => {
-        gsap.from(section.querySelectorAll('.section-intro, .about-copy, .text-link, .final-cta > *'), {
+      gsap.utils.toArray('.reveal').forEach((element) => {
+        gsap.from(element, {
           y: 34,
           autoAlpha: 0,
-          duration: 1,
+          duration: 0.95,
           ease: 'power3.out',
-          stagger: 0.09,
           scrollTrigger: {
-            trigger: section,
-            start: 'top 78%',
+            trigger: element,
+            start: 'top 82%',
           },
         });
       });
 
-      gsap.utils.toArray('.image-reveal').forEach((frame) => {
+      gsap.utils.toArray('.image-frame').forEach((frame) => {
         const image = frame.querySelector('img');
 
-        gsap.fromTo(
-          frame,
-          { clipPath: 'inset(10% 0% 10% 0%)', autoAlpha: 0.78 },
-          {
-            clipPath: 'inset(0% 0% 0% 0%)',
-            autoAlpha: 1,
-            duration: 1.1,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: frame,
-              start: 'top 82%',
-            },
+        gsap.from(frame, {
+          clipPath: 'inset(10% 0% 10% 0%)',
+          autoAlpha: 0.85,
+          duration: 1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: frame,
+            start: 'top 84%',
           },
-        );
+        });
 
         if (image) {
           gsap.to(image, {
-            yPercent: -7,
+            yPercent: -6,
             ease: 'none',
             scrollTrigger: {
               trigger: frame,
               start: 'top bottom',
               end: 'bottom top',
-              scrub: 1.2,
+              scrub: 1.4,
             },
           });
         }
       });
 
-      gsap.from('.film-card', {
-        y: 30,
+      gsap.from('.map-state', {
         autoAlpha: 0,
-        duration: 0.9,
-        ease: 'power3.out',
-        stagger: 0.07,
+        scale: 0.98,
+        duration: 0.75,
+        stagger: 0.012,
+        ease: 'power2.out',
         scrollTrigger: {
-          trigger: '.film-grid',
+          trigger: '.india-map-wrap',
           start: 'top 78%',
         },
       });
 
-      gsap.from('.journey-item', {
-        y: 34,
+      gsap.from('.film-row', {
+        y: 28,
         autoAlpha: 0,
-        duration: 1,
+        duration: 0.8,
+        stagger: 0.07,
         ease: 'power3.out',
-        stagger: 0.1,
         scrollTrigger: {
-          trigger: '.journey-grid',
-          start: 'top 80%',
-        },
-      });
-
-      const mapStates = gsap.utils.toArray('.map-state');
-      mapStates.forEach((state, index) => {
-        const length = typeof state.getTotalLength === 'function' ? state.getTotalLength() : 0;
-
-        if (length) {
-          gsap.set(state, {
-            strokeDasharray: length,
-            strokeDashoffset: length,
-          });
-        }
-
-        gsap.fromTo(
-          state,
-          { autoAlpha: 0, scale: 0.985 },
-          {
-            autoAlpha: 1,
-            scale: 1,
-            strokeDashoffset: 0,
-            duration: 1.1,
-            delay: index * 0.015,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: '.map-stage',
-              start: 'top 74%',
-            },
-          },
-        );
-      });
-
-      gsap.to('.map-stage', {
-        yPercent: -4,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.explore-india',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.4,
+          trigger: '.film-list',
+          start: 'top 82%',
         },
       });
     }, rootRef);
@@ -166,12 +107,11 @@ function useCinematicMotion(rootRef) {
   }, [rootRef]);
 }
 
-function VideoImage({ video, className = '' }) {
+function VideoImage({ video }) {
   const thumbnail = getYouTubeThumbnailSet(video.url);
 
   return (
     <img
-      className={className}
       src={thumbnail.maxres}
       alt=""
       loading="lazy"
@@ -186,12 +126,11 @@ function Navbar() {
   return (
     <header className="site-header">
       <a className="brand" href="#top" aria-label="Explore with Me home">
-        <span>Explore</span>
-        <span>with Me</span>
+        Explore with Me
       </a>
       <nav className="nav-links" aria-label="Primary navigation">
         {navItems.map((item) => (
-          <a key={item.href} href={item.href}>
+          <a href={item.href} key={item.href}>
             {item.label}
           </a>
         ))}
@@ -205,32 +144,21 @@ function Navbar() {
 
 function Hero() {
   const heroVideo = siteContent.videos[0];
-  const supportingVideos = siteContent.videos.slice(1, 4);
 
   return (
     <section className="hero" id="top" aria-labelledby="hero-title">
-      <div className="hero-media-stack">
-        <a className="hero-frame hero-frame-large image-reveal" href={heroVideo.url} target="_blank" rel="noreferrer">
-          <VideoImage video={heroVideo} />
-        </a>
-        <div className="hero-strip">
-          {supportingVideos.map((video, index) => (
-            <a className="image-reveal" href={video.url} target="_blank" rel="noreferrer" key={video.url}>
-              <VideoImage video={video} />
-              <span>{String(index + 2).padStart(2, '0')}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-
+      <a className="hero-visual image-frame" href={heroVideo.url} target="_blank" rel="noreferrer">
+        <VideoImage video={heroVideo} />
+      </a>
       <div className="hero-copy">
-        <p className="eyebrow">India travel films</p>
+        <p className="eyebrow">Travel films from India and beyond</p>
         <h1 id="hero-title">Explore with Me</h1>
+        <p className="hero-tags">Travel · Food · Culture · Adventure · Hidden Gems</p>
         <p className="hero-text">
-          A cinematic travel journal built around real videos, real journeys, and a growing visual map of India.
+          Discover incredible destinations, hidden gems, local culture and unforgettable travel experiences.
         </p>
-        <div className="hero-actions" aria-label="Primary actions">
-          <a className="button primary" href={siteContent.social.youtube} target="_blank" rel="noreferrer">
+        <div className="actions">
+          <a className="button primary" href="#films">
             Watch Films
           </a>
           <a className="button secondary" href="#explore-india">
@@ -242,163 +170,104 @@ function Hero() {
   );
 }
 
-function SectionIntro({ eyebrow, title, text }) {
-  return (
-    <div className="section-intro">
-      <p className="eyebrow">{eyebrow}</p>
-      <h2>{title}</h2>
-      {text ? <p>{text}</p> : null}
-    </div>
-  );
-}
-
-function FeaturedJourney() {
+function Featured() {
   const featuredVideo = siteContent.videos[0];
 
   return (
-    <section className="featured-journey section-band" id="featured" aria-labelledby="featured-title">
-      <SectionIntro
-        eyebrow="Featured journey"
-        title="A current frame from the channel"
-        text="The site uses real YouTube thumbnails and external links only, keeping playback fast and lightweight."
-      />
-      <a className="featured-panel image-reveal" href={featuredVideo.url} target="_blank" rel="noreferrer">
+    <section className="featured warm-section" id="featured" aria-labelledby="featured-title">
+      <div className="featured-copy reveal">
+        <p className="eyebrow">Featured journey</p>
+        <h2 id="featured-title">A journey worth watching.</h2>
+        <a className="text-button" href={featuredVideo.url} target="_blank" rel="noreferrer">
+          Watch Film
+        </a>
+      </div>
+      <a className="featured-image image-frame" href={featuredVideo.url} target="_blank" rel="noreferrer">
         <VideoImage video={featuredVideo} />
-        <span>Open featured film</span>
       </a>
     </section>
   );
 }
 
-function IndiaMap({ states, selectedStateId, onSelect }) {
-  return (
-    <svg className="india-map" viewBox="0 0 540 760" role="img" aria-labelledby="india-map-title">
-      <title id="india-map-title">Interactive India state map</title>
-      {states.map((state) => {
-        const isActive = state.videos.length > 0;
-        const isSelected = selectedStateId === state.id;
-
-        return (
-          <path
-            key={state.id}
-            d={state.path}
-            className={['map-state', isActive ? 'is-active' : 'is-muted', isSelected ? 'is-selected' : '']
-              .filter(Boolean)
-              .join(' ')}
-            tabIndex={isActive ? 0 : -1}
-            role={isActive ? 'button' : 'img'}
-            aria-label={isActive ? `${state.name}, verified films available` : `${state.name}, no verified films yet`}
-            onClick={() => {
-              if (isActive) {
-                onSelect(state.id);
-              }
-            }}
-            onKeyDown={(event) => {
-              if (isActive && (event.key === 'Enter' || event.key === ' ')) {
-                event.preventDefault();
-                onSelect(state.id);
-              }
-            }}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
 function ExploreIndia() {
-  const interactiveStates = siteContent.exploreIndia.states.filter((state) => state.videos.length > 0);
-  const [selectedStateId, setSelectedStateId] = useState(interactiveStates[0]?.id ?? '');
-  const panelRef = useRef(null);
-  const selectedState = useMemo(
-    () => siteContent.exploreIndia.states.find((state) => state.id === selectedStateId),
-    [selectedStateId],
+  const [hoveredState, setHoveredState] = useState(null);
+  const activeState = useMemo(
+    () => siteContent.exploreIndia.states.find((state) => state.id === hoveredState?.id),
+    [hoveredState],
   );
 
-  useEffect(() => {
-    if (!panelRef.current) {
-      return;
-    }
-
-    gsap.fromTo(panelRef.current, { y: 10, autoAlpha: 0.72 }, { y: 0, autoAlpha: 1, duration: 0.45, ease: 'power2.out' });
-  }, [selectedStateId]);
-
   return (
-    <section className="explore-india section-band" id="explore-india" aria-labelledby="explore-india-title">
-      <SectionIntro
-        eyebrow="Explore India"
-        title="An interactive map for verified journeys"
-        text="States become selectable only when a verified Explore with Me video is connected in the content file."
-      />
+    <section className="explore-india" id="explore-india" aria-labelledby="india-title">
+      <div className="section-heading reveal">
+        <p className="eyebrow">Explore India</p>
+        <h2 id="india-title">A visual map for future verified journeys.</h2>
+        <p>
+          State-level film connections will appear here only when they are verified in the content file. The existing
+          videos remain available below.
+        </p>
+      </div>
 
-      <div className="map-layout">
-        <div className="map-stage">
-          <IndiaMap
-            states={siteContent.exploreIndia.states}
-            selectedStateId={selectedStateId}
-            onSelect={setSelectedStateId}
-          />
+      <div className="india-map-layout">
+        <div className="india-map-wrap reveal">
+          <svg viewBox={indiaMap.viewBox} role="img" aria-label={indiaMap.label}>
+            {indiaMap.locations.map((location) => {
+              const hasContent = siteContent.exploreIndia.states.some((state) => state.id === location.id);
+              const isHovered = hoveredState?.id === location.id;
+
+              return (
+                <path
+                  className={['map-state', hasContent ? 'has-content' : 'is-quiet', isHovered ? 'is-hovered' : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  d={location.path}
+                  key={location.id}
+                  onMouseEnter={() => setHoveredState(location)}
+                  onFocus={() => setHoveredState(location)}
+                  onMouseLeave={() => setHoveredState(null)}
+                  tabIndex={0}
+                  aria-label={location.name}
+                />
+              );
+            })}
+          </svg>
         </div>
 
-        <aside className="map-panel" aria-live="polite">
-          <div className="map-panel-content" ref={panelRef}>
-            <p className="panel-kicker">Current coverage</p>
-            {selectedState ? (
-              <>
-              <h3>{selectedState.name}</h3>
-              <p>{selectedState.note}</p>
-              <div className="panel-videos">
-                {selectedState.videos.map((video) => (
-                  <a className="image-reveal" href={video.url} target="_blank" rel="noreferrer" key={video.url}>
-                    <VideoImage video={video} />
-                    <span>Open verified film</span>
-                  </a>
-                ))}
-              </div>
-              </>
-            ) : (
-              <>
-              <h3>No state-level mapping yet</h3>
+        <aside className="map-note reveal" aria-live="polite">
+          <p className="eyebrow">{hoveredState ? hoveredState.name : 'India'}</p>
+          {activeState ? (
+            <>
+              <h3>{activeState.name}</h3>
+              <p>{activeState.note}</p>
+            </>
+          ) : (
+            <>
+              <h3>{hoveredState ? 'No verified film connected yet.' : 'Hover the map.'}</h3>
               <p>
-                The existing video URLs are preserved below. Add a verified state connection in
-                <span> siteContent.js </span>
-                to activate a state on this map.
+                Unsupported states stay quiet until a real Explore with Me journey is connected. No destinations are
+                invented here.
               </p>
-              </>
-            )}
-          </div>
-          <div className="state-list" aria-label="India states and content availability">
-            {siteContent.exploreIndia.states.map((state) => (
-              <button
-                type="button"
-                key={state.id}
-                disabled={state.videos.length === 0}
-                className={selectedStateId === state.id ? 'is-selected' : ''}
-                onClick={() => setSelectedStateId(state.id)}
-              >
-                {state.name}
-              </button>
-            ))}
-          </div>
+            </>
+          )}
         </aside>
       </div>
     </section>
   );
 }
 
-function SelectedJourneys() {
+function Journeys() {
+  const journeyVideos = siteContent.videos.slice(0, 4);
+
   return (
-    <section className="selected-journeys section-band" id="journeys" aria-labelledby="journeys-title">
-      <SectionIntro
-        eyebrow="Selected journeys"
-        title="A growing India archive"
-        text="These are drawn from the existing verified YouTube URLs. More destination detail can be added when it is confirmed."
-      />
-      <div className="journey-grid">
-        {siteContent.videos.slice(0, 3).map((video, index) => (
-          <a className="journey-item image-reveal" href={video.url} target="_blank" rel="noreferrer" key={video.url}>
+    <section className="journeys warm-section" id="journeys" aria-labelledby="journeys-title">
+      <div className="section-heading reveal">
+        <p className="eyebrow">Journeys</p>
+        <h2 id="journeys-title">Real frames from the road.</h2>
+      </div>
+      <div className="journey-gallery">
+        {journeyVideos.map((video, index) => (
+          <a className={`journey-photo image-frame item-${index + 1}`} href={video.url} target="_blank" rel="noreferrer" key={video.url}>
             <VideoImage video={video} />
-            <span>Journey {String(index + 1).padStart(2, '0')}</span>
+            <span>{String(index + 1).padStart(2, '0')}</span>
           </a>
         ))}
       </div>
@@ -408,17 +277,20 @@ function SelectedJourneys() {
 
 function Films() {
   return (
-    <section className="films section-band" id="films" aria-labelledby="films-title">
-      <SectionIntro
-        eyebrow="YouTube films"
-        title="Real thumbnails, real links"
-        text="No embedded players, no fabricated titles, and no invented performance claims."
-      />
-      <div className="film-grid">
+    <section className="films" id="films" aria-labelledby="films-title">
+      <div className="section-heading reveal">
+        <p className="eyebrow">Films</p>
+        <h2 id="films-title">Watch the archive.</h2>
+      </div>
+      <div className="film-list">
         {siteContent.videos.map((video, index) => (
-          <a className="film-card image-reveal" href={video.url} target="_blank" rel="noreferrer" key={video.url}>
-            <VideoImage video={video} />
-            <span>Film {String(index + 1).padStart(2, '0')}</span>
+          <a className="film-row" href={video.url} target="_blank" rel="noreferrer" key={video.url}>
+            <span className="film-number">{String(index + 1).padStart(2, '0')}</span>
+            <span className="film-name">Explore with Me film</span>
+            <span className="film-thumb image-frame">
+              <VideoImage video={video} />
+            </span>
+            <span className="play-mark">Play</span>
           </a>
         ))}
       </div>
@@ -430,23 +302,22 @@ function About() {
   const aboutVideo = siteContent.videos[4] ?? siteContent.videos[0];
 
   return (
-    <section className="about section-band" id="about" aria-labelledby="about-title">
-      <SectionIntro eyebrow="About" title="Built for the next journey" />
-      <div className="about-copy">
-        <a className="about-image image-reveal" href={aboutVideo.url} target="_blank" rel="noreferrer">
-          <VideoImage video={aboutVideo} />
-        </a>
-        <div className="about-story">
-          <p>
-            Explore with Me is all about discovering incredible destinations, hidden gems, local culture, and
-            unforgettable travel experiences across India and beyond.
-          </p>
-          <p>
-            From travel guides and scenic road trips to food, adventure, and budget-friendly itineraries, every video is
-            created to inspire and help you plan your next journey.
-          </p>
-          <p className="about-tags">Travel • Culture • Food • Adventure • Hidden Gems</p>
-        </div>
+    <section className="about warm-section" id="about" aria-labelledby="about-title">
+      <a className="about-photo image-frame" href={aboutVideo.url} target="_blank" rel="noreferrer">
+        <VideoImage video={aboutVideo} />
+      </a>
+      <div className="about-copy reveal">
+        <p className="eyebrow">About</p>
+        <h2 id="about-title">A travel creator story.</h2>
+        <p>
+          Explore with Me is all about discovering incredible destinations, hidden gems, local culture, and unforgettable
+          travel experiences across India and beyond.
+        </p>
+        <p>
+          From travel guides and scenic road trips to food, adventure, and budget-friendly itineraries, every video is
+          created to inspire and help you plan your next journey.
+        </p>
+        <p className="about-tags">Travel • Culture • Food • Adventure • Hidden Gems</p>
       </div>
     </section>
   );
@@ -456,38 +327,18 @@ function Instagram() {
   const instagramVideos = siteContent.videos.slice(5, 8);
 
   return (
-    <section className="instagram section-band" id="instagram" aria-labelledby="instagram-title">
-      <SectionIntro
-        eyebrow="Instagram"
-        title="Field notes beyond the films"
-        text="Follow the creator account for additional travel updates and visual moments."
-      />
-      <div className="instagram-continuation">
-        <div className="instagram-frames" aria-hidden="true">
-          {instagramVideos.map((video) => (
-            <span className="image-reveal" key={video.url}>
-              <VideoImage video={video} />
-            </span>
-          ))}
-        </div>
-        <a className="text-link" href={siteContent.social.instagram} target="_blank" rel="noreferrer">
-          Visit @explore_with_me_vlogs
-        </a>
+    <section className="instagram" id="instagram" aria-labelledby="instagram-title">
+      <div className="instagram-gallery">
+        {instagramVideos.map((video) => (
+          <span className="image-frame" key={video.url}>
+            <VideoImage video={video} />
+          </span>
+        ))}
       </div>
-    </section>
-  );
-}
-
-function FinalCta() {
-  return (
-    <section className="final-cta" aria-labelledby="final-cta-title">
-      <p className="eyebrow">Keep exploring</p>
-      <h2 id="final-cta-title">Watch the films or follow the journey.</h2>
-      <div className="hero-actions">
-        <a className="button primary" href={siteContent.social.youtube} target="_blank" rel="noreferrer">
-          YouTube
-        </a>
-        <a className="button secondary" href={siteContent.social.instagram} target="_blank" rel="noreferrer">
+      <div className="instagram-copy reveal">
+        <p className="eyebrow">Follow the journey</p>
+        <h2 id="instagram-title">@explore_with_me_vlogs</h2>
+        <a className="button primary" href={siteContent.social.instagram} target="_blank" rel="noreferrer">
           Instagram
         </a>
       </div>
@@ -513,20 +364,19 @@ function Footer() {
 
 export default function App() {
   const rootRef = useRef(null);
-  useCinematicMotion(rootRef);
+  usePageMotion(rootRef);
 
   return (
     <div className="site-shell" ref={rootRef}>
       <Navbar />
       <main>
         <Hero />
-        <FeaturedJourney />
+        <Featured />
         <ExploreIndia />
-        <SelectedJourneys />
+        <Journeys />
         <Films />
         <About />
         <Instagram />
-        <FinalCta />
       </main>
       <Footer />
     </div>
